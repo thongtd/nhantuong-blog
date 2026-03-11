@@ -18,3 +18,7 @@ Blog.Dashboard/bin/
 Blog.Dashboard/obj/
 Blog.Api/.config/
 Blog.Api/Properties/
+WriterAgent/bin/
+WriterAgent/obj/
+WriterAgent/appsettings.Development.json
+WriterAgent/heroic-diode-489903-v2-18424c673090.json
