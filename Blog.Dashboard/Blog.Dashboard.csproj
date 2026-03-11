@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\dashboard\MicroBase.Dashboard.Robo\MicroBase.Dashboard.Robo.csproj" />
+    <ProjectReference Include="..\..\dashboard\MicroBase.Dashboard.Share\MicroBase.Dashboard.Share.csproj" />
+    <ProjectReference Include="..\Blog.Entity\Blog.Entity.csproj" />
+    <ProjectReference Include="..\Blog.Service\Blog.Service.csproj" />
+    <ProjectReference Include="..\Blog.Share\Blog.Share.csproj" />
+  </ItemGroup>
+
+</Project>

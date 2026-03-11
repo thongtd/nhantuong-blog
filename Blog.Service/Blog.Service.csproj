@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\share-project\MicroBase.Repository\MicroBase.Repository.csproj" />
+    <ProjectReference Include="..\..\share-project\MicroBase.Service\MicroBase.Service.csproj" />
+    <ProjectReference Include="..\Blog.Entity\Blog.Entity.csproj" />
+    <ProjectReference Include="..\Blog.Share\Blog.Share.csproj" />
+  </ItemGroup>
+
+</Project>
