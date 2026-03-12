@@ -25,16 +25,25 @@
     <PackageReference Include="Google.Apis.Sheets.v4" Version="1.73.0.4061" />
     <PackageReference Include="Markdig" Version="1.1.1" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.4" />
+    <PackageReference Include="NLog" Version="5.0.4" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\share-project\MicroBase.Service\MicroBase.Service.csproj" />
     <ProjectReference Include="..\Blog.Entity\Blog.Entity.csproj" />
+    <ProjectReference Include="..\Blog.Service\Blog.Service.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Update="heroic-diode-489903-v2-18424c673090.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="nlog.config">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 

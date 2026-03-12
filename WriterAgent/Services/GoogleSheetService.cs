@@ -34,7 +34,7 @@ public class GoogleSheetService
     public async Task<List<SheetRow>> GetAllRowsAsync()
     {
         var service = CreateSheetsService();
-        var range = $"{_settings.GoogleSheet.SheetName}!A:I";
+        var range = $"{_settings.GoogleSheet.SheetName}!A:J";
 
         var request = service.Spreadsheets.Values.Get(_settings.GoogleSheet.SpreadsheetId, range);
         var response = await request.ExecuteAsync();
@@ -59,7 +59,9 @@ public class GoogleSheetService
                 Image1 = GetCell(row, 4),
                 Image2 = GetCell(row, 5),
                 Image3 = GetCell(row, 6),
-                Status = GetCell(row, 7)
+                Status = GetCell(row, 7),
+                Thumbnail = GetCell(row, 8),
+                BlogCategory = GetCell(row, 9)
             });
         }
 
@@ -69,7 +71,7 @@ public class GoogleSheetService
     public async Task UpdateStatusAsync(int rowNumber, string status)
     {
         var service = CreateSheetsService();
-        var range = $"{_settings.GoogleSheet.SheetName}!F{rowNumber}:F{rowNumber}";
+        var range = $"{_settings.GoogleSheet.SheetName}!H{rowNumber}:H{rowNumber}";
 
         var valueRange = new ValueRange
         {

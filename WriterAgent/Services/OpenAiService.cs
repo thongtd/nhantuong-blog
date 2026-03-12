@@ -95,8 +95,9 @@ Yêu cầu SEO:
 
 Chỉ trả về JSON hợp lệ với cấu trúc sau:
 {
-  \"title\": \"Tiêu đề bài viết chuẩn SEO (không cố nhồi nhét từ khóa)\",
-  \"markdownBody\": \"Toàn bộ nội dung bài viết ở dạng Markdown\"
+  \"title\": \"Tiêu đề bài viết khoảng 15-20 từ, tiêu đề đặt kiểu báo trí \",
+  \"subContent\": \"Mô tả ngắn 2-3 câu, khái quát nội dung\",
+  \"markdownBody\": \"Toàn bộ nội dung bài viết ở dạng Markdown (500-700 từ)\"
 }
 
 Lưu ý:

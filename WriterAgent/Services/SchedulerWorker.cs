@@ -1,5 +1,5 @@
 ﻿using DailyContentWriter.Models;
-using DailyContentWriter.Utils;
+using MicroBase.RedisProvider;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -8,64 +8,74 @@ namespace DailyContentWriter.Services;
 
 public class SchedulerWorker : BackgroundService
 {
-    private readonly ILogger<SchedulerWorker> _logger;
-    private readonly AppSettings _settings;
-    private readonly ContentJobService _contentJobService;
+    private readonly ILogger<SchedulerWorker> logger;
+    private readonly AppSettings settings;
+    private readonly ContentJobService contentJobService;
+    private readonly IRedisStogare redisStogare;
 
-    private readonly HashSet<string> _executedKeys = new();
+    private readonly HashSet<string> executedKeys = new();
+    private const string LastRunRedisKey = "scheduler:contentjob:last_run";
+    private static readonly TimeSpan JobInterval = TimeSpan.FromHours(2);
 
     public SchedulerWorker(
         ILogger<SchedulerWorker> logger,
         IOptions<AppSettings> options,
-        ContentJobService contentJobService)
+        ContentJobService contentJobService,
+        IRedisStogare redisStogare)
     {
-        _logger = logger;
-        _settings = options.Value;
-        _contentJobService = contentJobService;
+        this.logger = logger;
+        settings = options.Value;
+        this.contentJobService = contentJobService;
+        this.redisStogare = redisStogare;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("SchedulerWorker started.");
+        logger.LogInformation("SchedulerWorker started.");
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var now = DateTime.Now;
-                var executionKey = TimeScheduleHelper.BuildExecutionKey(now);
+                var now = DateTime.UtcNow;
 
-                //if (TimeScheduleHelper.IsScheduledTime(now, _settings.Schedule.Times))
-                //{
-                //    if (!_executedKeys.Contains(executionKey))
-                //    {
-                _logger.LogInformation("Triggered at {Now}", now);
-                        await _contentJobService.ProcessOnePendingRowAsync();
-                        _executedKeys.Add(executionKey);
-                //    }
-                //}
+                // Lấy mốc chạy cuối từ Redis
+                var lastRunStr = await redisStogare.GetAsync<string>(LastRunRedisKey);
 
-                CleanupOldKeys();
+                DateTime? lastRun = null;
+                if (!string.IsNullOrWhiteSpace(lastRunStr) &&
+                    DateTime.TryParse(lastRunStr, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+                {
+                    lastRun = parsed;
+                }
+
+                var shouldRun = !lastRun.HasValue || (now - lastRun.Value) >= JobInterval;
+
+                if (shouldRun)
+                {
+                    logger.LogInformation(
+                        "Scheduler triggered at {Now}. LastRun = {LastRun}",
+                        now,
+                        lastRun);
+
+                    await contentJobService.ProcessOnePendingRowAsync();
+
+                    // Chỉ cập nhật sau khi chạy thành công
+                    await redisStogare.SetAsync(
+                        LastRunRedisKey,
+                        now.ToString("O")); // ISO 8601 round-trip
+
+                    logger.LogInformation("Scheduler completed. New LastRun = {Now}", now);
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Lỗi khi chạy scheduler.");
+                logger.LogError(ex, "Lỗi khi chạy scheduler.");
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(_settings.Schedule.CheckIntervalSeconds), stoppingToken);
-        }
-    }
-
-    private void CleanupOldKeys()
-    {
-        if (_executedKeys.Count < 500) return;
-
-        var todayPrefix = DateTime.Now.ToString("yyyy-MM-dd");
-        var oldKeys = _executedKeys.Where(x => !x.StartsWith(todayPrefix)).ToList();
-
-        foreach (var key in oldKeys)
-        {
-            _executedKeys.Remove(key);
+            await Task.Delay(
+                TimeSpan.FromSeconds(settings.Schedule.CheckIntervalSeconds),
+                stoppingToken);
         }
     }
 }

@@ -145,6 +145,11 @@ namespace Blog.Service.API
                 }
             }
 
+            if (id == null)
+            {
+                await redisStogare.KeyDelAsync(BLOG);
+            }
+
             await redisStogare.HSetAsync(BLOG, caches);
         }
 
