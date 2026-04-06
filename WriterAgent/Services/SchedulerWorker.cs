@@ -15,7 +15,7 @@ public class SchedulerWorker : BackgroundService
 
     private readonly HashSet<string> executedKeys = new();
     private const string LastRunRedisKey = "scheduler:contentjob:last_run";
-    private static readonly TimeSpan JobInterval = TimeSpan.FromHours(1);
+    private static readonly TimeSpan JobInterval = TimeSpan.FromHours(2);
 
     public SchedulerWorker(
         ILogger<SchedulerWorker> logger,
