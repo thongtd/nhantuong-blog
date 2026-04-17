@@ -28,5 +28,8 @@ namespace Blog.Entity.Entities
         [Column("description")]
         [MaxLength(512)]
         public string? Description { get; set; }
+
+        [Column("sitemap_indexed")]
+        public bool SitemapIndexed { get; set; }
     }
 }

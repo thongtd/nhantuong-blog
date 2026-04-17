@@ -52,6 +52,9 @@ namespace Blog.Entity.Entities
         [Required]
         public bool HotNews { get; set; }
 
+        [Column("sitemap_indexed")]
+        public bool SitemapIndexed { get; set; }
+
         public virtual Collection<BlogCategoryMap> BlogCategoryMaps { get; set; }
 
         public virtual Collection<BlogTagMap> BlogTagMaps { get; set; }

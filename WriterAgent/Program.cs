@@ -54,8 +54,10 @@ builder.Services.AddSingleton<GoogleSheetService>();
 builder.Services.AddSingleton<OpenAiService>();
 builder.Services.AddSingleton<ContentTransformer>();
 builder.Services.AddSingleton<ContentJobService>();
+builder.Services.AddSingleton<SitemapService>();
 
 builder.Services.AddHostedService<SchedulerWorker>();
+builder.Services.AddHostedService<SitemapSchedulerWorker>();
 builder.Services.AddTransient<IBlogCacheService, BlogCacheService>();
 
 logger.Info("Application started");

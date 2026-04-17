@@ -7,6 +7,8 @@ public class AppSettings
     public OpenAiSettings ChatGpt { get; set; } = new();
 
     public ScheduleSettings Schedule { get; set; } = new();
+
+    public SitemapSettings Sitemap { get; set; } = new();
 }
 
 public class GoogleSheetSettings

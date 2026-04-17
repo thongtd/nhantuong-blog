@@ -48,6 +48,9 @@ namespace Blog.Entity.Entities
         [Column("enabled")]
         public bool Enabled { get; set; }
 
+        [Column("sitemap_indexed")]
+        public bool SitemapIndexed { get; set; }
+
         public virtual ICollection<Blog> Blogs { get; set; }
     }
 }
