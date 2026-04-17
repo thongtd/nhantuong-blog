@@ -34,9 +34,14 @@ public class SitemapService
 
     public async Task ExecuteAsync()
     {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         var sitemap = _settings.Sitemap;
         var outputDir = sitemap.OutputDir;
         var destDir = sitemap.DestinationDir;
+
+        _logger.LogInformation("══ SITEMAP JOB START ══");
+        _logger.LogInformation("  Config: Domain={Domain} | OutputDir={OutputDir} | DestDir={DestDir}",
+            sitemap.Domain, outputDir, destDir);
 
         Directory.CreateDirectory(outputDir);
 
@@ -48,9 +53,9 @@ public class SitemapService
 
         CopyToDestination(outputDir, destDir);
 
-        _logger.LogInformation(
-            "Sitemap updated: {Blogs} blogs, {Tags} tags, {Categories} categories appended",
-            blogCount, tagCount, catCount);
+        sw.Stop();
+        _logger.LogInformation("══ SITEMAP JOB END ══ Blogs={Blogs} | Tags={Tags} | Categories={Categories} | Duration={Duration}ms",
+            blogCount, tagCount, catCount, sw.ElapsedMilliseconds);
     }
 
     private async Task<int> AppendBlogEntries(string outputDir, string domain)
@@ -63,16 +68,23 @@ public class SitemapService
             .Select(b => new { b.Id, b.Slug, b.ModifiedDate, b.CreatedDate })
             .ToListAsync();
 
+        _logger.LogInformation("  [BLOGS] Query: found {Count} new records", newBlogs.Count);
+
         if (newBlogs.Count == 0)
             return 0;
 
         var filePath = Path.Combine(outputDir, BlogSitemapFile);
         var entries = new StringBuilder();
+        var skipped = 0;
 
         foreach (var blog in newBlogs)
         {
             if (string.IsNullOrWhiteSpace(blog.Slug))
+            {
+                skipped++;
+                _logger.LogWarning("  [BLOGS] Skipped blog id={Id} (empty slug)", blog.Id);
                 continue;
+            }
 
             var lastmod = (blog.ModifiedDate ?? blog.CreatedDate).ToString("yyyy-MM-dd");
             entries.AppendLine($"  <url><loc>{domain}/{blog.Slug}</loc><lastmod>{lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>");
@@ -82,6 +94,9 @@ public class SitemapService
 
         var ids = newBlogs.Select(b => b.Id).ToList();
         await MarkIndexed(db, "blogs", ids);
+
+        _logger.LogInformation("  [BLOGS] Appended {Count} URLs to {File} (skipped={Skipped})",
+            newBlogs.Count - skipped, BlogSitemapFile, skipped);
 
         return newBlogs.Count;
     }
@@ -96,16 +111,23 @@ public class SitemapService
             .Select(t => new { t.Id, t.Slug, t.ModifiedDate, t.CreatedDate })
             .ToListAsync();
 
+        _logger.LogInformation("  [TAGS] Query: found {Count} new records", newTags.Count);
+
         if (newTags.Count == 0)
             return 0;
 
         var filePath = Path.Combine(outputDir, TagsSitemapFile);
         var entries = new StringBuilder();
+        var skipped = 0;
 
         foreach (var tag in newTags)
         {
             if (string.IsNullOrWhiteSpace(tag.Slug))
+            {
+                skipped++;
+                _logger.LogWarning("  [TAGS] Skipped tag id={Id} (empty slug)", tag.Id);
                 continue;
+            }
 
             var lastmod = (tag.ModifiedDate ?? tag.CreatedDate).ToString("yyyy-MM-dd");
             entries.AppendLine($"  <url><loc>{domain}/tag/{tag.Slug}</loc><lastmod>{lastmod}</lastmod><changefreq>daily</changefreq><priority>0.6</priority></url>");
@@ -115,6 +137,9 @@ public class SitemapService
 
         var ids = newTags.Select(t => t.Id).ToList();
         await MarkIndexed(db, "blog_tags", ids);
+
+        _logger.LogInformation("  [TAGS] Appended {Count} URLs to {File} (skipped={Skipped})",
+            newTags.Count - skipped, TagsSitemapFile, skipped);
 
         return newTags.Count;
     }
@@ -129,16 +154,23 @@ public class SitemapService
             .Select(c => new { c.Id, c.Slug, c.ModifiedDate, c.CreatedDate })
             .ToListAsync();
 
+        _logger.LogInformation("  [CATEGORIES] Query: found {Count} new records", newCats.Count);
+
         if (newCats.Count == 0)
             return 0;
 
         var filePath = Path.Combine(outputDir, CategorySitemapFile);
         var entries = new StringBuilder();
+        var skipped = 0;
 
         foreach (var cat in newCats)
         {
             if (string.IsNullOrWhiteSpace(cat.Slug))
+            {
+                skipped++;
+                _logger.LogWarning("  [CATEGORIES] Skipped category id={Id} (empty slug)", cat.Id);
                 continue;
+            }
 
             var lastmod = (cat.ModifiedDate ?? cat.CreatedDate).ToString("yyyy-MM-dd");
             entries.AppendLine($"  <url><loc>{domain}/{cat.Slug}</loc><lastmod>{lastmod}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>");
@@ -148,6 +180,9 @@ public class SitemapService
 
         var ids = newCats.Select(c => c.Id).ToList();
         await MarkIndexed(db, "blog_categories", ids);
+
+        _logger.LogInformation("  [CATEGORIES] Appended {Count} URLs to {File} (skipped={Skipped})",
+            newCats.Count - skipped, CategorySitemapFile, skipped);
 
         return newCats.Count;
     }
