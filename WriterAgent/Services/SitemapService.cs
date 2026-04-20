@@ -18,6 +18,7 @@ public class SitemapService
     private const string BlogSitemapFile = "blog_sitemap.xml";
     private const string TagsSitemapFile = "tags_sitemap.xml";
     private const string CategorySitemapFile = "category_sitemap.xml";
+    private const string StaticSitemapFile = "static_sitemap.xml";
 
     private const string UrlsetOpen = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
     private const string UrlsetClose = "</urlset>";
@@ -224,28 +225,35 @@ public class SitemapService
 
     private void EnsureSitemapIndex(string outputDir, string domain)
     {
+        // Generate static_sitemap.xml with <urlset> for static pages
+        GenerateStaticSitemap(outputDir, domain);
+
         var filePath = Path.Combine(outputDir, SitemapIndexFile);
         var now = DateTime.UtcNow.ToString("yyyy-MM-dd");
 
         var sb = new StringBuilder();
         sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
         sb.AppendLine("<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
-        sb.AppendLine();
-
-        // Static pages
-        sb.AppendLine("  <!-- Trang chủ & trang tĩnh -->");
-        AppendStaticUrls(sb, domain);
-        sb.AppendLine();
 
         // Sub-sitemaps
-        sb.AppendLine("  <!-- Sub-sitemaps -->");
+        AppendSitemapRef(sb, domain, StaticSitemapFile, now);
         AppendSitemapRef(sb, domain, CategorySitemapFile, now);
         AppendSitemapRef(sb, domain, TagsSitemapFile, now);
         AppendSitemapRef(sb, domain, BlogSitemapFile, now);
-        sb.AppendLine();
 
         sb.AppendLine("</sitemapindex>");
 
+        File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
+    }
+
+    private void GenerateStaticSitemap(string outputDir, string domain)
+    {
+        var filePath = Path.Combine(outputDir, StaticSitemapFile);
+        var sb = new StringBuilder();
+        sb.AppendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+        sb.AppendLine("<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">");
+        AppendStaticUrls(sb, domain);
+        sb.AppendLine("</urlset>");
         File.WriteAllText(filePath, sb.ToString(), Encoding.UTF8);
     }
 
@@ -296,7 +304,7 @@ public class SitemapService
 
         Directory.CreateDirectory(destDir);
 
-        var files = new[] { SitemapIndexFile, BlogSitemapFile, TagsSitemapFile, CategorySitemapFile };
+        var files = new[] { SitemapIndexFile, StaticSitemapFile, BlogSitemapFile, TagsSitemapFile, CategorySitemapFile };
         foreach (var file in files)
         {
             var src = Path.Combine(outputDir, file);
