@@ -13,6 +13,7 @@ public class SitemapService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<SitemapService> _logger;
     private readonly AppSettings _settings;
+    private readonly GoogleIndexingService _googleIndexingService;
 
     private const string SitemapIndexFile = "sitemap.xml";
     private const string BlogSitemapFile = "blog_sitemap.xml";
@@ -26,11 +27,13 @@ public class SitemapService
     public SitemapService(
         IServiceScopeFactory scopeFactory,
         ILogger<SitemapService> logger,
-        IOptions<AppSettings> options)
+        IOptions<AppSettings> options,
+        GoogleIndexingService googleIndexingService)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
         _settings = options.Value;
+        _googleIndexingService = googleIndexingService;
     }
 
     public async Task ExecuteAsync()
@@ -53,6 +56,12 @@ public class SitemapService
         EnsureSitemapIndex(outputDir, sitemap.Domain);
 
         CopyToDestination(outputDir, destDir);
+
+        // Submit sitemaps to Google Search Console nếu có dữ liệu mới
+        if (blogCount > 0 || tagCount > 0 || catCount > 0)
+        {
+            await _googleIndexingService.SubmitAllSitemapsAsync();
+        }
 
         sw.Stop();
         _logger.LogInformation("══ SITEMAP JOB END ══ Blogs={Blogs} | Tags={Tags} | Categories={Categories} | Duration={Duration}ms",

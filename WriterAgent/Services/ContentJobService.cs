@@ -22,6 +22,8 @@ public class ContentJobService
     private readonly IRepository<BlogCategory, BlogDbContext> blogCategoryRepo;
     private readonly IRepository<BlogCategoryMap, BlogDbContext> blogCategoryMapRepo;
     private readonly IBlogCacheService blogCacheService;
+    private readonly LlmUsageCsvLogger llmUsageCsvLogger;
+    private readonly GoogleIndexingService googleIndexingService;
 
     public ContentJobService(
         GoogleSheetService googleSheetService,
@@ -35,7 +37,9 @@ public class ContentJobService
         FileUploadFactory fileUploadFactory,
         IRepository<BlogCategory, BlogDbContext> blogCategoryRepo,
         IRepository<BlogCategoryMap, BlogDbContext> blogCategoryMapRepo,
-        IBlogCacheService blogCacheService)
+        IBlogCacheService blogCacheService,
+        LlmUsageCsvLogger llmUsageCsvLogger,
+        GoogleIndexingService googleIndexingService)
     {
         this.googleSheetService = googleSheetService;
         this.openAiService = openAiService;
@@ -50,6 +54,8 @@ public class ContentJobService
         var uploadServiceName = configuration.GetValue<string>("FileManage:EnableService");
         this.fileUploadService = fileUploadFactory.GetServiceByName(uploadServiceName);
         this.blogCategoryMapRepo = blogCategoryMapRepo;
+        this.llmUsageCsvLogger = llmUsageCsvLogger;
+        this.googleIndexingService = googleIndexingService;
     }
 
     private string GetFileExtensionFromUrl(string fileUrl)
@@ -124,8 +130,16 @@ public class ContentJobService
                 noOfImg++;
             }
 
-            var article = await openAiService.GenerateArticleAsync(targetRow.MainContent, targetRow.SEOKeywords, noOfImg);
+            var generationResult = await openAiService.GenerateArticleAsync(targetRow.MainContent, targetRow.SEOKeywords, noOfImg);
+            var article = generationResult.Article;
             var htmlBody = contentTransformer.ConvertMarkdownToHtml(article.MarkdownBody ?? string.Empty);
+
+            llmUsageCsvLogger.Log(
+                generationResult.Model,
+                article.Title,
+                generationResult.PromptTokens,
+                generationResult.CompletionTokens,
+                generationResult.TotalTokens);
 
             var finalHtml = htmlBody;
 
@@ -223,6 +237,10 @@ public class ContentJobService
             await googleSheetService.UpdateStatusAsync(targetRow.RowNumber, "Đã viết");
 
             logger.LogInformation("Đã cập nhật trạng thái dòng {RowNumber} thành 'Đã viết'.", targetRow.RowNumber);
+
+            // Thông báo Google Indexing API về URL mới
+            var blogUrl = $"https://nhantuong.vn/{slug}";
+            await googleIndexingService.NotifyUrlUpdatedAsync(blogUrl);
         }
         catch (Exception ex)
         {

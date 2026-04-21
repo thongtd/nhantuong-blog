@@ -53,6 +53,8 @@ RedisServiceModule.ModuleRegister(builder.Services, Configuration);
 builder.Services.AddSingleton<GoogleSheetService>();
 builder.Services.AddSingleton<OpenAiService>();
 builder.Services.AddSingleton<ContentTransformer>();
+builder.Services.AddSingleton<LlmUsageCsvLogger>();
+builder.Services.AddSingleton<GoogleIndexingService>();
 builder.Services.AddSingleton<ContentJobService>();
 builder.Services.AddSingleton<SitemapService>();
 

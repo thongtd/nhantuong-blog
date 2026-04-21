@@ -20,12 +20,13 @@ public class OpenAiService
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _settings.ChatGpt.Token);
     }
 
-    public async Task<ArticleResult> GenerateArticleAsync(string mainContent, string seoKeywords,int noOfImg)
+    public async Task<GenerationResult> GenerateArticleAsync(string mainContent, string seoKeywords,int noOfImg)
     {
         var request = BuildPrompt(mainContent, seoKeywords, noOfImg);
         var genContent = await _httpClient.PostRequestAsync<GptCompletionReq, GptCompletionRes>("/chat/completions", request);
 
-        var outputText = genContent.Data.Choices[0].Message.Content;
+        var response = genContent.Data;
+        var outputText = response.Choices[0].Message.Content;
         var article = JsonSerializer.Deserialize<ArticleResult>(outputText, new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
@@ -36,7 +37,14 @@ public class OpenAiService
             throw new Exception("Không parse được ArticleResult từ phản hồi model.");
         }
 
-        return article;
+        return new GenerationResult
+        {
+            Article = article,
+            Model = response.Model ?? request.Model,
+            PromptTokens = response.Usage?.PromptTokens ?? 0,
+            CompletionTokens = response.Usage?.CompletionTokens ?? 0,
+            TotalTokens = response.Usage?.TotalTokens ?? 0
+        };
     }
 
     private static GptCompletionReq BuildPrompt(string mainContent, string seoKeywords, int noOfImg)
