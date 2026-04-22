@@ -1,5 +1,7 @@
 using System.Globalization;
+using DailyContentWriter.Models;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace DailyContentWriter.Services;
 
@@ -12,10 +14,11 @@ public class LlmUsageCsvLogger
     private readonly ILogger<LlmUsageCsvLogger> _logger;
     private readonly object _lock = new();
 
-    public LlmUsageCsvLogger(ILogger<LlmUsageCsvLogger> logger)
+    public LlmUsageCsvLogger(ILogger<LlmUsageCsvLogger> logger, IOptions<AppSettings> options)
     {
         _logger = logger;
-        _csvFilePath = Path.Combine(AppContext.BaseDirectory, CsvFileName);
+        var outputDir = options.Value.Sitemap.OutputDir;
+        _csvFilePath = Path.Combine(AppContext.BaseDirectory, outputDir, CsvFileName);
     }
 
     public void Log(string model, string title, int promptTokens, int completionTokens, int totalTokens)
